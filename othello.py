@@ -1,10 +1,3 @@
-'''
-    Siyan
-    CS5001
-    Fall 2018
-    November 28, 2018
-'''
-
 import score, turtle, random
 from board import Board
 
@@ -80,6 +73,61 @@ class Othello(Board):
             self.num_tiles[self.current_player] += 1
             self.draw_tile(self.move, self.current_player)
             self.flip_tiles()
+
+    def make_minimax_move(self):
+        best_score = float('-inf')
+        best_move = None
+        for move in self.get_legal_moves():
+            # Assuming minimax depth and maximizing player initial call
+            score = self.minimax(move, 3, False)
+            if score > best_score:
+                best_score = score
+                best_move = move
+        if best_move:
+            self.move = best_move
+            self.make_move()
+
+    def minimax(self, move, depth, is_maximizing):
+        if depth == 0 or not self.has_legal_move():
+            return self.evaluate_heuristic()
+        
+        if is_maximizing:
+            best_score = float('-inf')
+            for new_move in self.get_legal_moves():
+                self.board[new_move[0]][new_move[1]] = self.current_player + 1
+                score = self.minimax(new_move, depth - 1, False)
+                self.board[new_move[0]][new_move[1]] = 0  # Undo move
+                best_score = max(best_score, score)
+            return best_score
+        else:
+            best_score = float('inf')
+            for new_move in self.get_legal_moves():
+                self.board[new_move[0]][new_move[1]] = 1 - self.current_player + 1
+                score = self.minimax(new_move, depth - 1, True)
+                self.board[new_move[0]][new_move[1]] = 0  # Undo move
+                best_score = min(best_score, score)
+            return best_score
+
+    def evaluate_heuristic(self):
+        # Simple stability heuristic: prefer edges and corners
+        stability_scores = 0
+        corners = [(0, 0), (0, self.n-1), (self.n-1, 0), (self.n-1, self.n-1)]
+        for corner in corners:
+            if self.board[corner[0]][corner[1]] == self.current_player + 1:
+                stability_scores += 3  # corner stability score
+            elif self.board[corner[0]][corner[1]] == (1 - self.current_player) + 1:
+                stability_scores -= 3
+        
+        edges = [0, self.n-1]
+        for i in range(self.n):
+            for edge in edges:
+                if self.board[edge][i] == self.current_player + 1 or self.board[i][edge] == self.current_player + 1:
+                    stability_scores += 1  # edge stability score
+                elif self.board[edge][i] == (1 - self.current_player) + 1 or self.board[i][edge] == (1 - self.current_player) + 1:
+                    stability_scores -= 1
+        
+        return stability_scores + self.num_tiles[self.current_player] - self.num_tiles[1 - self.current_player]
+
     
     def flip_tiles(self):
         ''' Method: flip_tiles
@@ -241,7 +289,7 @@ class Othello(Board):
             self.current_player = 1
             if self.has_legal_move():
                 print('Computer\'s turn.')
-                self.make_random_move()
+                self.make_minimax_move()
                 self.current_player = 0
                 if self.has_legal_move():  
                     break
@@ -270,16 +318,6 @@ class Othello(Board):
             print('Your turn.')
             turtle.onscreenclick(self.play)
         
-    def make_random_move(self):
-        ''' Method: make_random_move
-            Parameters: self
-            Returns: nothing
-            Does: Makes a random legal move on the board.
-        '''
-        moves = self.get_legal_moves()
-        if moves:
-            self.move = random.choice(moves)
-            self.make_move()
 
     def report_result(self):
         ''' Method: report_result
