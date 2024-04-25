@@ -8,6 +8,7 @@ MOVE_DIRS = [(-1, -1), (-1, 0), (-1, +1),
              (0, -1),           (0, +1),
              (+1, -1), (+1, 0), (+1, +1)]
 
+
 class Othello(Board):
     ''' Othello class.
         Attributes: current_player, an integer 0 or 1 to represent two 
@@ -26,7 +27,8 @@ class Othello(Board):
                  report_result, __str__ , __eq__ and all other methods 
                  inherited from class Board
     '''
-
+    num_user_moves: int = 0
+    num_computer_moves: int = 0
     def __init__(self, n = 8):
         '''
             Initilizes the attributes. 
@@ -73,13 +75,17 @@ class Othello(Board):
             self.num_tiles[self.current_player] += 1
             self.draw_tile(self.move, self.current_player)
             self.flip_tiles()
+            if self.current_player == 0:
+                self.num_user_moves += 1
+            else:
+                self.num_computer_moves += 1
 
     def make_minimax_move(self):
         best_score = float('-inf')
         best_move = None
         for move in self.get_legal_moves():
             # Assuming minimax depth and maximizing player initial call
-            score = self.minimax(move, 3, False)
+            score = self.minimax(move, 2, False)
             if score > best_score:
                 best_score = score
                 best_move = move
@@ -327,14 +333,22 @@ class Othello(Board):
                   tiles each play has.
         '''
         print('GAME OVER!!')
+        print('Number of Your Moves: ')
+        print(self.num_user_moves)
+        print('Number of Computer Moves: ')
+        print(self.num_computer_moves)
+
+
         if self.num_tiles[0] > self.num_tiles[1]:
             print('YOU WIN!!',
                   'You have %d tiles, but the computer only has %d!' 
                   % (self.num_tiles[0], self.num_tiles[1]))
+            print(self.num_tiles[1] / 64)
         elif self.num_tiles[0] < self.num_tiles[1]:
             print('YOU LOSE...',
                   'The computer has %d tiles, but you only have %d :(' 
                   % (self.num_tiles[1], self.num_tiles[0]))
+            print(self.num_tiles[1] / 64)
         else:
             print("IT'S A TIE!! There are %d of each!" % self.num_tiles[0])
     
